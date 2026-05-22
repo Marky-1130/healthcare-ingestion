@@ -7,6 +7,9 @@ from app.repository.patient import PatientRepository
 from app.repository.person import PersonRepository
 from app.repository.visit import VisitRepository
 from worker.celery_app import celery
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 @celery.task(name="worker.tasks.process_csv_task")
 def process_csv_task(object_name: str):
@@ -18,6 +21,8 @@ def process_csv_task(object_name: str):
     patient_repo = PatientRepository(db)
     person_repo = PersonRepository(db)
     visit_repo = VisitRepository(db)
+
+    logger.info(f"Starting CSV processing for file: {object_name}")
 
     try:
         with open(temp_file, newline="") as csvfile:

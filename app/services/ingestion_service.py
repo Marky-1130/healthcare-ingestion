@@ -6,7 +6,6 @@ from worker.tasks import process_csv_task
 
 class IngestionService:
     def __init__(self):
-        pass
         self.s3_service = S3Service()
 
     def ingest(self, payload: list[VisitIngestSchema]):

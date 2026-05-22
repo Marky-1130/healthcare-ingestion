@@ -33,6 +33,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    volumes:
+      - healthcare-data:/var/lib/postgresql/data
 
   localstack:
     image: localstack/localstack:3.8.1
@@ -65,3 +67,6 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     command: celery -A worker.celery_app.celery worker -Q ingestion --loglevel=info
     restart: always
+
+volumes:
+  healthcare-data:

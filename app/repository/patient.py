@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy.orm import Session, joinedload
 from app.repository.base import BaseRepository
 from app.models.patient import Patient
@@ -26,3 +27,25 @@ class PatientRepository(BaseRepository):
         )
 
         return patient
+    
+    def get_patients(
+            self,
+            skip: int = 0,
+            limit: int = 10,
+            mrn: str | None = None,
+            first_name: str | None = None,
+            last_name: str | None = None,
+        ) -> List[Patient]:
+        
+        query = self.db.query(Patient).options(
+            joinedload(Patient.person),
+            joinedload(Patient.visits),
+        )
+        if mrn:
+            query = query.filter(Patient.mrn == mrn)
+        if first_name:
+            query = query.filter(Patient.person.has(first_name=first_name))
+        if last_name:
+            query = query.filter(Patient.person.has(last_name=last_name))
+
+        return query.offset(skip).limit(limit).all()

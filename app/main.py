@@ -3,21 +3,18 @@ from app.api.routers import router
 from app.core.config import settings
 from app.core.database import Base
 from app.core.database import engine
-
 from app.services.s3_service import S3Service
-
-#Create the tables
-import app.models
-Base.metadata.create_all(bind=engine)
+from app.core.logging import get_logger
 
 app = FastAPI(title=settings.APP_NAME)
 
 app.include_router(router)
 
+logger = get_logger(__name__)
+
 @app.get("/")
 def healthcheck():
-    s3 = S3Service()
-    s3.check_connection()
+    logger.info(f"Executing Heath Check")
     return {
         "status": "healthy"
     }
