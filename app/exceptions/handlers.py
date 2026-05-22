@@ -49,7 +49,7 @@ async def generic_exception_handler(
         content={
             "success": False,
             "message": "Internal server error",
-    },
+    }
 )
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

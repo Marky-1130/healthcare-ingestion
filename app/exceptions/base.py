@@ -11,3 +11,6 @@ class DatabaseException(AppException):
 
 class S3Exception(AppException):
     pass
+
+class CSVServiceException(AppException):
+    pass
