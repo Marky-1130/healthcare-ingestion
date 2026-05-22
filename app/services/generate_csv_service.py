@@ -7,7 +7,7 @@ from app.exceptions.base import CSVServiceException
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-class CSVService:
+class GenerateCSVService:
     columns = [
         "mrn",
         "first_name",

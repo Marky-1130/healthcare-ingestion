@@ -1,6 +1,6 @@
 from pathlib import Path
 from app.schemas.ingest import VisitIngestSchema
-from app.services.csv_service import CSVService
+from app.services.generate_csv_service import GenerateCSVService
 from app.services.s3_service import S3Service
 from app.exceptions.base import ValidationException
 from app.core.logging import get_logger
@@ -23,7 +23,7 @@ class IngestionService:
 
         logger.info(f"Starting ingestion for {len(payload)} records")
 
-        csv_path = CSVService.generate_csv(payload)
+        csv_path = GenerateCSVService.generate_csv(payload)
         file_name = Path(csv_path).name
         self.s3_service.upload_file(csv_path, file_name)
         process_csv_task.delay(file_name)
