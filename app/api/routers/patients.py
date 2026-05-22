@@ -11,9 +11,9 @@ from app.services.patient_service import PatientService
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
 @router.post("/ingest")
-def ingest_patients(payload: list[VisitIngestSchema]):
+async def ingest_patients(payload: list[VisitIngestSchema]):
     service = IngestionService()
-    return service.ingest(payload)
+    return await service.ingest(payload)
 
 @router.get("", response_model=PaginatedResponse[PatientResponse])
 def get_patients(

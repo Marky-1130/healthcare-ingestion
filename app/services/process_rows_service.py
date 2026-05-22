@@ -1,5 +1,3 @@
-import csv
-from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -9,48 +7,30 @@ from app.repository.patient import PatientRepository
 from app.repository.person import PersonRepository
 from app.repository.visit import VisitRepository
 
-from app.exceptions.base import (
-    ValidationException,
-    DatabaseException,
-    CSVServiceException
-)
+from app.exceptions.base import DatabaseException, ValidationException
 
 logger = get_logger(__name__)
 
-class ImportCSVService:
+class ProcessRowsService:
     def __init__(self, db: Session):
         self.db = db
         self.patient_repo = PatientRepository(db)
         self.person_repo = PersonRepository(db)
         self.visit_repo = VisitRepository(db)
 
-    def process_file(self, file_path: str) -> None:
-        try:
-            with open(file_path, newline="", encoding="utf-8") as csvfile:
-                reader = csv.DictReader(csvfile)
+    def process_csv_rows(self, rows: list):
+        if not rows:
+            raise ValidationException(message=f"Rows cannot be empty")
 
-                for row_number, row in enumerate(reader, start=2):
-                    try:
-                        self._process_row(row)
-
-                    except SQLAlchemyError as e:
-                        self.db.rollback()
-
-                        raise DatabaseException(message=f"Database error on row {row_number}") from e
-
-                self.db.commit()
-
-        except (
-            OSError,
-            csv.Error,
-            ValidationException,
-            DatabaseException,
-        ):
-            raise
-
-        except Exception as e:
-            self.db.rollback()
-            raise CSVServiceException(message=f"Failed to process CSV file: {e}") from e
+        for row in rows:
+            try:
+                self._process_row(row)
+            
+            except SQLAlchemyError as e:
+                self.db.rollback()
+                raise DatabaseException(message=f"Database error occurred: {e}") from e 
+            
+        self.db.commit()
 
     def _process_row(self, row: dict) -> None:
         patient_id = self._upsert_patient(row)

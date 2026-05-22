@@ -1,0 +1,2 @@
+CREATE DATABASE healthcare;
+CREATE DATABASE temporal;

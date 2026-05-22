@@ -4,8 +4,7 @@ A production-grade healthcare ingestion microservice built with:
 
 - FastAPI
 - PostgreSQL
-- Celery
-- Redis
+- Temporal
 - Docker
 - LocalStack
 - Alembic
@@ -25,7 +24,7 @@ CSV Generation
    ↓
 LocalStack S3
    ↓
-Celery Worker
+Temporal Worker
    ↓
 PostgreSQL
 ```
@@ -72,8 +71,7 @@ PostgreSQL
 | FastAPI | API framework |
 | PostgreSQL | Database |
 | SQLAlchemy | ORM |
-| Celery | Async worker |
-| Redis | Celery broker |
+| Temporal | Async worker |
 | LocalStack | AWS emulator |
 | Docker | Containerization |
 | Alembic | DB migrations |
@@ -102,6 +100,7 @@ project-root/
 ├── Makefile
 ├── requirements.txt
 ├── alembic.ini
+├── init-db
 ├── .env.example
 └── README.md
 ```
@@ -151,9 +150,10 @@ The following containers will run:
 | Service | Description |
 |---|---|
 | api | FastAPI application |
-| worker | Celery worker |
+| worker | Temporal worker |
 | db | PostgreSQL database |
-| redis | Celery broker |
+| temporal | Temporal broker |
+| temporal-ui | Temporal UI |
 | localstack | Local AWS services |
 
 ---
@@ -342,7 +342,7 @@ GET /patients/{patient_id}
 2. Payload converted into CSV
 3. CSV stored locally in `uploads/`
 4. CSV uploaded to LocalStack S3
-5. Celery task triggered
+5. Temporal workflow triggered
 6. Worker downloads CSV from S3
 7. Records processed into PostgreSQL
 
@@ -465,7 +465,7 @@ SELECT * FROM visits;
 
 # Workflow Validation
 
-Verify Celery worker logs:
+Verify Temporal worker logs:
 
 ```bash
 docker compose logs worker
@@ -496,7 +496,6 @@ The application includes:
 
 Recommended future improvements:
 
-- Temporal workflow replacement
 - OpenTelemetry tracing
 - Prometheus metrics
 - Kubernetes deployment

@@ -26,7 +26,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: healthcare
+      POSTGRES_DB: postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d healthcare"]
       interval: 5s
@@ -35,6 +35,7 @@ services:
       start_period: 10s
     volumes:
       - healthcare-data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
 
   localstack:
     image: localstack/localstack:3.8.1
@@ -48,25 +49,42 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
 
-  redis:
-    image: redis:8
-    container_name: healthcare-redis
+  temporal:
+    image: temporalio/auto-setup:1.27
+    container_name: healthcare-temporal
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
-      - "6379:6379"
+      - "7233:7233"
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=postgres
+      - POSTGRES_DB=temporal
+      - POSTGRES_SEEDS=db
 
-  celery-worker:
+  temporal-ui:
+    image: temporalio/ui:2.34.0
+    container_name: healthcare-temporal-ui
+    ports:
+    - "8088:8080"
+    environment:
+    - TEMPORAL_ADDRESS=temporal:7233
+
+  worker:
     build: .
-    container_name: healthcare-celery
     working_dir: /app
+    container_name: healthcare-temporal-worker
+    environment:
+    - PYTHONPATH=/app
+    - TEMPORAL_ADDRESS=temporal:7233
     env_file:
       - .env
     depends_on:
-      - redis
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    command: celery -A worker.celery_app.celery worker -Q ingestion --loglevel=info
-    restart: always
+      - temporal
+    command: python -m worker.worker
 
 volumes:
   healthcare-data:
