@@ -1,9 +1,8 @@
 from fastapi import APIRouter
 from fastapi import Depends, Query
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.patient import Patient
 from app.schemas.ingest import VisitIngestSchema
 from app.schemas.patient import PatientResponse
 from app.services.ingestion_service import IngestionService

@@ -219,3 +219,10 @@ __marimo__/
 
 #Debug Files
 .vscode
+
+#Ignore uploads and alembic version
+uploads/*
+!uploads/.gitkeep
+
+versions/*
+!versions/.gitkeep
