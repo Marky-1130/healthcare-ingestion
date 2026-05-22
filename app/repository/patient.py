@@ -48,4 +48,7 @@ class PatientRepository(BaseRepository):
         if last_name:
             query = query.filter(Patient.person.has(last_name=last_name))
 
-        return query.offset(skip).limit(limit).all()
+        total = query.count()
+        items = query.offset(skip).limit(limit).all()
+
+        return items, total

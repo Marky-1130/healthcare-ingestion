@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import datetime
+from typing import List, Generic, TypeVar
 from pydantic import BaseModel
 
 class VisitResponse(BaseModel):
@@ -22,3 +23,12 @@ class PatientResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+T = TypeVar("T")
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    data: List[T]
+    page: int
+    size: int
+    total: int
+    pages: int

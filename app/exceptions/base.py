@@ -14,3 +14,6 @@ class S3Exception(AppException):
 
 class CSVServiceException(AppException):
     pass
+
+class RecordNotFound(AppException):
+    pass

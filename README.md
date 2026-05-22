@@ -89,7 +89,6 @@ project-root/
 │   ├── api/
 │   ├── core/
 │   ├── exceptions/
-│   ├── middleware/
 │   ├── models/
 │   ├── repositories/
 │   ├── schemas/
