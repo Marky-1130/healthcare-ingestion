@@ -503,7 +503,6 @@ Recommended future improvements:
 - API rate limiting
 - Integration testing
 - CI/CD pipeline
-- Async SQLAlchemy
 - Health probes
 
 ---

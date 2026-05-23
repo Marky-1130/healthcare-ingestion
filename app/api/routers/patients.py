@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from fastapi import Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_async_db
 from app.schemas.ingest import VisitIngestSchema
 from app.schemas.patient import PatientResponse, PaginatedResponse
 from app.services.ingestion_service import IngestionService
@@ -16,8 +16,8 @@ async def ingest_patients(payload: list[VisitIngestSchema]):
     return await service.ingest(payload)
 
 @router.get("", response_model=PaginatedResponse[PatientResponse])
-def get_patients(
-        db: Session = Depends(get_db),
+async def get_patients(
+        db: AsyncSession = Depends(get_async_db),
         page: int = Query(default=1, ge=1),
         size: int = Query(default=10, ge=1, le=100),
         mrn: str | None = None,
@@ -26,12 +26,12 @@ def get_patients(
     ):
     
     service = PatientService(db)
-    return service.get_patients(page=page, size=size, mrn=mrn, first_name=first_name, last_name=last_name)
+    return await service.get_patients(page=page, size=size, mrn=mrn, first_name=first_name, last_name=last_name)
 
 @router.get("/{patient_id}", response_model=PatientResponse)
-def get_patient(
+async def get_patient(
         patient_id: str,
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_async_db),
     ):
     service = PatientService(db)
-    return service.get_patient_by_id(patient_id)
+    return await service.get_patient_by_id(patient_id)

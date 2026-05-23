@@ -1,16 +1,17 @@
 from math import ceil
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository.patient import PatientRepository
 from app.exceptions.base import RecordNotFound, DatabaseException
 from sqlalchemy.exc import SQLAlchemyError
 
 class PatientService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.repo = PatientRepository(db)
 
-    def get_patient_by_id(self, id: str):
+    async def get_patient_by_id(self, id: str):
         try:
-            patient = self.repo.get_by_id(id)
+            patient = await self.repo.get_by_id(id)
 
             if not patient:
                 raise RecordNotFound(
@@ -21,12 +22,12 @@ class PatientService:
             return patient
         
         except SQLAlchemyError as e:
-                raise DatabaseException(
-                    message="Database connection error",
-                    status_code=503
-                )
+            raise DatabaseException(
+                message="Database connection error",
+                status_code=503
+            )
 
-    def get_patients(
+    async def get_patients(
         self,
         page: int = 1,
         size: int = 10,
@@ -37,7 +38,7 @@ class PatientService:
         try:
             skip = (page - 1) * size
 
-            items, total = self.repo.get_patients(
+            items, total = await self.repo.get_patients(
                 skip=skip,
                 limit=size,
                 mrn=mrn,

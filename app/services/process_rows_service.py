@@ -1,5 +1,5 @@
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.models import Patient, Person, Visit
@@ -12,19 +12,19 @@ from app.exceptions.base import DatabaseException, ValidationException
 logger = get_logger(__name__)
 
 class ProcessRowsService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.patient_repo = PatientRepository(db)
         self.person_repo = PersonRepository(db)
         self.visit_repo = VisitRepository(db)
 
-    def process_csv_rows(self, rows: list):
+    async def process_csv_rows(self, rows: list):
         if not rows:
             raise ValidationException(message=f"Rows cannot be empty")
 
         for row in rows:
             try:
-                self._process_row(row)
+                await self._process_row(row)
             
             except SQLAlchemyError as e:
                 self.db.rollback()
@@ -32,12 +32,12 @@ class ProcessRowsService:
             
         self.db.commit()
 
-    def _process_row(self, row: dict) -> None:
-        patient_id = self._upsert_patient(row)
-        self._create_visit(row, patient_id)
+    async def _process_row(self, row: dict) -> None:
+        patient_id = await self._upsert_patient(row)
+        await self._create_visit(row, patient_id)
 
-    def _upsert_patient(self, row: dict) -> int:
-        existing_patient = self.patient_repo.get_by_mrn(row["mrn"])
+    async def _upsert_patient(self, row: dict) -> int:
+        existing_patient = await self.patient_repo.get_by_mrn(row["mrn"])
 
         if existing_patient:
             logger.info(f"Existing Patient: {existing_patient.mrn} - Updating details if applicable.")
@@ -48,7 +48,7 @@ class ProcessRowsService:
             return existing_patient.id
 
         patient = Patient(mrn=row["mrn"])
-        self.patient_repo.add(patient)
+        await self.patient_repo.add(patient)
 
         self.db.flush()
 
@@ -59,12 +59,12 @@ class ProcessRowsService:
             birth_date=row["birth_date"]
         )
 
-        self.person_repo.add(person)
+        await self.person_repo.add(person)
         logger.info(f"Adding patient details: {patient.mrn}")
 
         return patient.id
 
-    def _create_visit(self, row: dict, patient_id: int,) -> None:
+    async def _create_visit(self, row: dict, patient_id: int,) -> None:
         existing_visit = (
             self.visit_repo.get_by_account_number(row["visit_account_number"])
         )
@@ -81,4 +81,4 @@ class ProcessRowsService:
         )
 
         logger.info(f"Adding visit details: {visit.visit_account_number}")
-        self.visit_repo.add(visit)
+        await self.visit_repo.add(visit)
