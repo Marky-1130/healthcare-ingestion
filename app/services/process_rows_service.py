@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,10 +28,10 @@ class ProcessRowsService:
                 await self._process_row(row)
             
             except SQLAlchemyError as e:
-                self.db.rollback()
+                await self.db.rollback()
                 raise DatabaseException(message=f"Database error occurred: {e}") from e 
             
-        self.db.commit()
+        await self.db.commit()
 
     async def _process_row(self, row: dict) -> None:
         patient_id = await self._upsert_patient(row)
@@ -43,20 +44,20 @@ class ProcessRowsService:
             logger.info(f"Existing Patient: {existing_patient.mrn} - Updating details if applicable.")
             existing_patient.person.first_name = row["first_name"]
             existing_patient.person.last_name = row["last_name"]
-            existing_patient.person.birth_date = row["birth_date"]
+            existing_patient.person.birth_date = self._parse_date(row["birth_date"])
 
             return existing_patient.id
 
         patient = Patient(mrn=row["mrn"])
         await self.patient_repo.add(patient)
 
-        self.db.flush()
+        await self.db.flush()
 
         person = Person(
             id=patient.id,
             first_name=row["first_name"],
             last_name=row["last_name"],
-            birth_date=row["birth_date"]
+            birth_date=self._parse_date(row["birth_date"])
         )
 
         await self.person_repo.add(person)
@@ -65,9 +66,7 @@ class ProcessRowsService:
         return patient.id
 
     async def _create_visit(self, row: dict, patient_id: int,) -> None:
-        existing_visit = (
-            self.visit_repo.get_by_account_number(row["visit_account_number"])
-        )
+        existing_visit = await self.visit_repo.get_by_account_number(row["visit_account_number"])
 
         if existing_visit:
             logger.info(f"Existing visit number: {existing_visit.visit_account_number} - Skipping add")
@@ -76,9 +75,13 @@ class ProcessRowsService:
         visit = Visit(
             visit_account_number=row["visit_account_number"],
             patient_id=patient_id,
-            visit_date=row["visit_date"],
+            visit_date=self._parse_date(row["visit_date"]),
             reason=row.get("reason")
         )
 
         logger.info(f"Adding visit details: {visit.visit_account_number}")
         await self.visit_repo.add(visit)
+
+    @staticmethod
+    def _parse_date(value: str):
+        return datetime.strptime(value, "%Y-%m-%d").date()

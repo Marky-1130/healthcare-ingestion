@@ -224,5 +224,5 @@ __marimo__/
 uploads/*
 !uploads/.gitkeep
 
-versions/*
-!versions/.gitkeep
+alembic/versions/*
+!alembic/versions/.gitkeep
